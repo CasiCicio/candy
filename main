@@ -7,24 +7,21 @@ PUNCTAJ_LINIE_5 = 50
 PUNCTAJ_L = 20
 PUNCTAJ_T = 30
 
-
 N = 11
 
 
 def genereaza_matrice(n):
     return [[random.randint(0, 4) for _ in range(n)] for _ in range(n)]
 
-
+# Afișare matrice
 def afiseaza_matrice(matrice):
     for rand in matrice:
         print(' '.join(str(x) for x in rand))
     print()
 
-
 def verifica_formatiuni(matrice):
     formatiuni_gasite = []
 
-  
     for i in range(N):
         for j in range(N - 2):
             if matrice[i][j] != 0 and matrice[i][j] == matrice[i][j + 1] == matrice[i][j + 2]:
@@ -34,7 +31,7 @@ def verifica_formatiuni(matrice):
                 if j + 4 < N and matrice[i][j] == matrice[i][j + 4]:
                     lungime = 5
                 formatiuni_gasite.append((i, j, 'orizontala', lungime))
-                j += lungime - 1  # Avansează j pentru a nu dubla găsirea
+                j += lungime - 1
 
     for j in range(N):
         for i in range(N - 2):
@@ -45,12 +42,10 @@ def verifica_formatiuni(matrice):
                 if i + 4 < N and matrice[i][j] == matrice[i + 4][j]:
                     lungime = 5
                 formatiuni_gasite.append((i, j, 'verticala', lungime))
-                i += lungime - 1  # Avansează i pentru a nu dubla găsirea
-
+                i += lungime - 1
 
     for i in range(N - 2):
         for j in range(N - 2):
-            # Verificare L
             if matrice[i][j] != 0:
                 if (matrice[i][j] == matrice[i][j + 1] == matrice[i][j + 2] and
                     matrice[i][j] == matrice[i + 1][j] == matrice[i + 2][j]):
@@ -75,7 +70,7 @@ def verifica_formatiuni(matrice):
 def elimina_formatiuni(matrice, formatiuni):
     puncte = 0
     for formatiune in formatiuni:
-        if len(formatiune) == 4:  
+        if len(formatiune) == 4:
             i, j, tip, lungime = formatiune
             if lungime == 3:
                 puncte += PUNCTAJ_LINIE_3
@@ -88,32 +83,52 @@ def elimina_formatiuni(matrice, formatiuni):
                     matrice[i][j + k] = 0
                 elif tip == 'verticala' and i + k < N:
                     matrice[i + k][j] = 0
-        elif len(formatiune) == 3:  # Formațiuni de tip L sau T
+        elif len(formatiune) == 3:
             i, j, tip = formatiune
             if tip == 'L' and i + 2 < N and j + 2 < N:
                 puncte += PUNCTAJ_L
-                # Marcare elemente pentru L ca 0
                 for x in range(3):
                     if j + x < N:
-                        matrice[i][j + x] = 0  # linie orizontală
+                        matrice[i][j + x] = 0
                     if i + x < N:
-                        matrice[i + x][j] = 0  # coloană verticală
+                        matrice[i + x][j] = 0
             elif tip == 'T' and i + 2 < N and j - 1 >= 0 and j + 1 < N:
                 puncte += PUNCTAJ_T
-                # Marcare elemente pentru T ca 0
-                matrice[i][j - 1] = 0  # stânga
-                matrice[i][j] = 0  # centru
-                matrice[i][j + 1] = 0  # dreapta
-                matrice[i + 1][j] = 0  # sub centru
-                matrice[i + 2][j] = 0  # sub sub centru
+                matrice[i][j - 1] = 0
+                matrice[i][j] = 0
+                matrice[i][j + 1] = 0
+                matrice[i + 1][j] = 0
+                matrice[i + 2][j] = 0
 
     return puncte
+
 def actualizeaza_matrice(matrice):
     for j in range(N):
+        # Căderea elementelor existente
         coloana = [matrice[i][j] for i in range(N) if matrice[i][j] != 0]
-        coloana = [0] * (N - len(coloana)) + coloana
+        numar_goluri = N - len(coloana)
+        # Adaugă noi bomboane în partea de sus
+        coloana = [random.randint(1, 4) for _ in range(numar_goluri)] + coloana
         for i in range(N):
             matrice[i][j] = coloana[i]
+
+def verifica_mutari_posibile(matrice):
+    mutari_valide = []
+    for i in range(N):
+        for j in range(N):
+            if j + 1 < N:
+                matrice[i][j], matrice[i][j + 1] = matrice[i][j + 1], matrice[i][j]
+                if verifica_formatiuni(matrice):
+                    mutari_valide.append(((i, j), (i, j + 1)))
+                matrice[i][j], matrice[i][j + 1] = matrice[i][j + 1], matrice[i][j]
+
+            if i + 1 < N:
+                matrice[i][j], matrice[i + 1][j] = matrice[i + 1][j], matrice[i][j]
+                if verifica_formatiuni(matrice):
+                    mutari_valide.append(((i, j), (i + 1, j)))
+                matrice[i][j], matrice[i + 1][j] = matrice[i + 1][j], matrice[i][j]
+
+    return mutari_valide
 
 
 def joc_complet():
@@ -125,12 +140,15 @@ def joc_complet():
         afiseaza_matrice(matrice)
         formatiuni = verifica_formatiuni(matrice)
         if not formatiuni:
+            print("Nu mai sunt mutări posibile!")
             break
+
         punctaj += elimina_formatiuni(matrice, formatiuni)
         actualizeaza_matrice(matrice)
         numar_mutari += 1
 
     return punctaj, numar_mutari
+
 
 rezultate = [joc_complet() for _ in range(100)]
 punctaje = [rez[0] for rez in rezultate]
