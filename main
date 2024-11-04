@@ -1,0 +1,148 @@
+import random
+
+# Constante pentru punctaj
+PUNCTAJ_LINIE_3 = 5
+PUNCTAJ_LINIE_4 = 10
+PUNCTAJ_LINIE_5 = 50
+PUNCTAJ_L = 20
+PUNCTAJ_T = 30
+
+# Dimensiunea matricei
+N = 11
+
+# Generare matrice aleatorie
+def genereaza_matrice(n):
+    return [[random.randint(0, 4) for _ in range(n)] for _ in range(n)]
+
+# Afișare matrice
+def afiseaza_matrice(matrice):
+    for rand in matrice:
+        print(' '.join(str(x) for x in rand))
+    print()
+
+# Verificare linie de 3, 4, 5 și formațiuni L și T
+def verifica_formatiuni(matrice):
+    formatiuni_gasite = []
+
+    # Verificare linii orizontale și verticale de 3, 4, 5
+    for i in range(N):
+        for j in range(N - 2):
+            if matrice[i][j] != 0 and matrice[i][j] == matrice[i][j + 1] == matrice[i][j + 2]:
+                lungime = 3
+                if j + 3 < N and matrice[i][j] == matrice[i][j + 3]:
+                    lungime = 4
+                if j + 4 < N and matrice[i][j] == matrice[i][j + 4]:
+                    lungime = 5
+                formatiuni_gasite.append((i, j, 'orizontala', lungime))
+                j += lungime - 1  # Avansează j pentru a nu dubla găsirea
+
+    for j in range(N):
+        for i in range(N - 2):
+            if matrice[i][j] != 0 and matrice[i][j] == matrice[i + 1][j] == matrice[i + 2][j]:
+                lungime = 3
+                if i + 3 < N and matrice[i][j] == matrice[i + 3][j]:
+                    lungime = 4
+                if i + 4 < N and matrice[i][j] == matrice[i + 4][j]:
+                    lungime = 5
+                formatiuni_gasite.append((i, j, 'verticala', lungime))
+                i += lungime - 1  # Avansează i pentru a nu dubla găsirea
+
+    # Verificare L și T de 3x3
+    for i in range(N - 2):
+        for j in range(N - 2):
+            # Verificare L
+            if matrice[i][j] != 0:
+                if (matrice[i][j] == matrice[i][j + 1] == matrice[i][j + 2] and
+                    matrice[i][j] == matrice[i + 1][j] == matrice[i + 2][j]):
+                    formatiuni_gasite.append((i, j, 'L'))
+                if (matrice[i][j] == matrice[i][j + 1] == matrice[i][j + 2] and
+                    matrice[i][j + 2] == matrice[i + 1][j + 2] == matrice[i + 2][j + 2]):
+                    formatiuni_gasite.append((i, j + 2, 'L'))
+                if (matrice[i][j] == matrice[i + 1][j] == matrice[i + 2][j] and
+                    matrice[i + 2][j] == matrice[i + 2][j + 1] == matrice[i + 2][j + 2]):
+                    formatiuni_gasite.append((i + 2, j, 'L'))
+                if (matrice[i][j + 2] == matrice[i + 1][j + 2] == matrice[i + 2][j + 2] and
+                    matrice[i + 2][j + 2] == matrice[i + 2][j + 1] == matrice[i + 2][j]):
+                    formatiuni_gasite.append((i + 2, j + 2, 'L'))
+
+            # Verificare T
+            if matrice[i][j + 1] != 0 and matrice[i][j] == matrice[i][j + 1] == matrice[i][j + 2]:
+                if (matrice[i][j + 1] == matrice[i + 1][j + 1] and
+                    matrice[i][j + 1] == matrice[i + 2][j + 1]):
+                    formatiuni_gasite.append((i, j + 1, 'T'))
+
+    return formatiuni_gasite
+
+# Eliminare formațiuni și actualizare matrice
+def elimina_formatiuni(matrice, formatiuni):
+    puncte = 0
+    for formatiune in formatiuni:
+        if len(formatiune) == 4:  # Formațiuni de tip linie (orizontala/verticala)
+            i, j, tip, lungime = formatiune
+            if lungime == 3:
+                puncte += PUNCTAJ_LINIE_3
+            elif lungime == 4:
+                puncte += PUNCTAJ_LINIE_4
+            elif lungime == 5:
+                puncte += PUNCTAJ_LINIE_5
+            for k in range(lungime):
+                if tip == 'orizontala' and j + k < N:
+                    matrice[i][j + k] = 0
+                elif tip == 'verticala' and i + k < N:
+                    matrice[i + k][j] = 0
+        elif len(formatiune) == 3:  # Formațiuni de tip L sau T
+            i, j, tip = formatiune
+            if tip == 'L' and i + 2 < N and j + 2 < N:
+                puncte += PUNCTAJ_L
+                # Marcare elemente pentru L ca 0
+                for x in range(3):
+                    if j + x < N:
+                        matrice[i][j + x] = 0  # linie orizontală
+                    if i + x < N:
+                        matrice[i + x][j] = 0  # coloană verticală
+            elif tip == 'T' and i + 2 < N and j - 1 >= 0 and j + 1 < N:
+                puncte += PUNCTAJ_T
+                # Marcare elemente pentru T ca 0
+                matrice[i][j - 1] = 0  # stânga
+                matrice[i][j] = 0  # centru
+                matrice[i][j + 1] = 0  # dreapta
+                matrice[i + 1][j] = 0  # sub centru
+                matrice[i + 2][j] = 0  # sub sub centru
+
+    return puncte
+# Gestionarea "căderii" bomboanelor
+def actualizeaza_matrice(matrice):
+    for j in range(N):
+        coloana = [matrice[i][j] for i in range(N) if matrice[i][j] != 0]
+        coloana = [0] * (N - len(coloana)) + coloana
+        for i in range(N):
+            matrice[i][j] = coloana[i]
+
+# Funcție principală pentru un joc complet
+def joc_complet():
+    matrice = genereaza_matrice(N)
+    punctaj = 0
+    numar_mutari = 0
+
+    while punctaj < 10000:
+        afiseaza_matrice(matrice)
+        formatiuni = verifica_formatiuni(matrice)
+        if not formatiuni:
+            break
+        punctaj += elimina_formatiuni(matrice, formatiuni)
+        actualizeaza_matrice(matrice)
+        numar_mutari += 1
+
+    return punctaj, numar_mutari
+
+# Rulare simulare pentru 100 de jocuri
+rezultate = [joc_complet() for _ in range(100)]
+punctaje = [rez[0] for rez in rezultate]
+mutari = [rez[1] for rez in rezultate]
+
+# Calcularea mediei punctajului și numărului de mutări
+media_punctaj = sum(punctaje) / len(punctaje)
+media_mutari = sum(mutari) / len(mutari)
+
+print(f"Media punctajului: {media_punctaj}")
+print(f"Numărul mediu de mutări: {media_mutari}")
